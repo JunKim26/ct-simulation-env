@@ -1,29 +1,23 @@
-# Ensure the script runs with administrator privileges
-if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host "⚠️ Please run this script as Administrator!" -ForegroundColor Red
-    exit 1
-}
+# setup.ps1 - DCMTK Installation Script for Windows using Chocolatey
 
-Write-Host "Installing DCMTK..." -ForegroundColor Cyan
+Write-Host "Starting DCMTK installation..." -ForegroundColor Cyan
 
 # Check if Chocolatey is installed
-if (!(Get-Command choco -ErrorAction SilentlyContinue)) {
-    Write-Host "⚠️ Chocolatey not found. Installing Chocolatey first..." -ForegroundColor Yellow
-    Set-ExecutionPolicy Bypass -Scope Process -Force
-    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-    refreshenv
+$chocoInstalled = Get-Command choco -ErrorAction SilentlyContinue
+if (-not $chocoInstalled) {
+    Write-Host "Chocolatey not found. Installing Chocolatey..." -ForegroundColor Yellow
+    # Install Chocolatey if not installed
+    Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 }
 
 # Install DCMTK using Chocolatey
-Write-Host "📦 Installing DCMTK via Chocolatey..." -ForegroundColor Cyan
-choco install -y dcmtk
+Write-Host "Installing DCMTK via Chocolatey..." -ForegroundColor Yellow
+choco install dcmtk -y
 
-# Verify installation
-if (Get-Command dcmdump -ErrorAction SilentlyContinue) {
-    Write-Host "✅ DCMTK installed successfully!" -ForegroundColor Green
-    Write-Host "DCMTK Version:"
-    dcmdump --version
+# Verify Installation
+$dcmtkVersion = dcmdump --version
+if ($dcmtkVersion) {
+    Write-Host "DCMTK successfully installed: $dcmtkVersion" -ForegroundColor Green
 } else {
-    Write-Host "❌ DCMTK installation failed. Please install manually from https://dicom.offis.de/dcmtk.php.en" -ForegroundColor Red
-    exit 1
+    Write-Host "DCMTK installation failed. Please install manually from https://dicom.offis.de/dcmtk.php.en" -ForegroundColor Red
 }
